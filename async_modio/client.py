@@ -61,7 +61,7 @@ class Client:
         if self._test:
             return f"https://api.test.mod.io/{self.version}"
         else:
-            f"https://api.mod.io/{self.version}"
+            return f"https://api.mod.io/{self.version}"
 
     def __repr__(self):
         return f"<modio.Client rate_limit={self.rate_limit} rate_retry={self.rate_retry} rate_remain={self.rate_remain}>"
