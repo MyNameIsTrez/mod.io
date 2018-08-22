@@ -820,7 +820,7 @@ class Filter:
          E.g. 'id=[10, 3, 4]' or 'name=["Best","Mod"]'
         """
         for key, value in kwargs.items():
-            self._set(key, ",".join(value), "{}-in")
+            self._set(key, ",".join(str(x) for x in value), "{}-in")
         return self
 
     def values_not_in(self, **kwargs):
@@ -830,7 +830,7 @@ class Filter:
          E.g. 'id=[10, 3, 4]' or 'name=["Best","Mod"]'
         """
         for key, value in kwargs.items():
-            self._set(key, ",".join(value), "{}-not-in")
+            self._set(key, ",".join(str(x) for x in value), "{}-not-in")
         return self
 
     def max(self, **kwargs):
@@ -891,7 +891,7 @@ class Filter:
             order.
 
         """
-        self._sort = text if not reverse else f"-{text}"
+        self._sort = key if not reverse else f"-{key}"
         return self
 
     def limit(self, limit):
