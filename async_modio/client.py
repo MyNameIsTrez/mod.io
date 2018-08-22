@@ -79,7 +79,7 @@ class Client:
         self.rate_remain = r.headers.get("X-RateLimit-Remaining", self.rate_remain)
         self.rate_retry = r.headers.get("X-Ratelimit-RetryAfter", 0)
 
-        if r.status_code == 204:
+        if r.status == 204:
             return r
 
         request_json = await r.json()
@@ -143,8 +143,9 @@ class Client:
         return headers
 
     async def _get_request(self, url, *, h_type=0, **fields):
-        filter = (fields.pop("filter") if fields.get("filter") else Filter()).__dict__.copy()
-        extra = {**filter, **fields}
+        f = fields.pop("filter")
+        filter = (f if f else Filter()).__dict__.copy()
+        extra = {**fields, **filter}
 
         if not self.access_token:
             extra["api_key"] = self.api_key
