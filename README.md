@@ -3,7 +3,7 @@
 ![mod.io Logo](https://static.mod.io/v1/images/branding/modio-color-dark.png "https://mod.io")
 
 An async wrapper for the mod.io API in Python. 
-* Docs (No async specific docs atm) 
+* [Docs](https://clementj18.github.io/mod.io/)
 * [Support](https://discord.gg/Hkq7X7n)
 
 ## Getting an OAuth 2 Access Token
