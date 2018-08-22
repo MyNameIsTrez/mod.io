@@ -1,5 +1,5 @@
-import requests
-import json
+import aiohttp
+import asyncio
 from typing import Union
 
 from .game import Game
@@ -49,18 +49,13 @@ class Client:
         self.access_token = fields.pop("auth", None)
         self.lang = fields.pop("lang", "en")
         self.version = fields.pop("version", "v1")
+        self.loop = fields.pop("loop", asyncio.get_event_loop())
         self.rate_limit = None
         self.rate_remain = None
         self.rate_retry = 0
         self._test = fields.pop("test", False)
+        self.session = aiohttp.ClientSession(loop=self.loop)
         
-        #check o auth 2 token
-        if self.access_token:
-            self.get_my_user()
-        else:
-            #check api key if no o auth 2
-            self.get_games()
-
     @property
     def BASE_PATH(self):
         if self._test:
@@ -71,7 +66,7 @@ class Client:
     def __repr__(self):
         return f"<modio.Client rate_limit={self.rate_limit} rate_retry={self.rate_retry} rate_remain={self.rate_remain}>"
     
-    def _error_check(self, r):
+    async def _error_check(self, r):
         """Updates the rate-limit attributes and check validity of the request."""
         self.rate_limit = r.headers.get("X-RateLimit-Limit", self.rate_limit)
         self.rate_remain = r.headers.get("X-RateLimit-Remaining", self.rate_remain)
