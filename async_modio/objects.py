@@ -276,7 +276,7 @@ class ModFile:
         if not self._game_id:
             raise modioException("This endpoint cannot be used for ModFile object recuperated through the me/modfiles endpoint")
 
-        file_json = self._client._put_request(f'/games/{self._game_id}/mods/{self.mod_id}/files/{self.id}', data = fields)
+        file_json = self._client._put_request(f'/games/{self._game_id}/mods/{self.mod}/files/{self.id}', data = fields)
         self.__init__(client=self._client, game_id=self._game_id, **file_json)
 
     async def delete(self):
@@ -293,7 +293,7 @@ class ModFile:
         if not self._game_id:
             raise modioException("This endpoint cannot be used for ModFile object recuperated through the me/modfiles endpoint")
             
-        r = await self._client._delete_request(f'/games/{self._game_id}/mods/{self.mod_id}/files/{self.id}')
+        r = await self._client._delete_request(f'/games/{self._game_id}/mods/{self.mod}/files/{self.id}')
         return r
 
     def url_expired(self):
