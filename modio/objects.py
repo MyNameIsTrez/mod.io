@@ -169,8 +169,10 @@ class Comment:
     def __repr__(self):
         return f"<modio.Comment id={self.id} mod={self.mod}>"
 
-    def delete(self):
-        """Remove the comment"""
+    async def delete(self):
+        """Remove the comment
+
+        This function is a coroutine"""
         r = self._client._delete_request(f'/games/{self._mod.game}/mods/{self._mod.id}/comments/{self.id}')
         return r
 
@@ -241,8 +243,10 @@ class ModFile:
     def __repr__(self):
         return f"<modio.ModFile id={self.id} name={self.filename} version={self.version}>"
 
-    def get_owner(self):
-        """Returns the original submitter of the resource
+    async def get_owner(self):
+        """Returns the original submitter of the resource.
+
+        This function is a coroutine
 
         Returns
         --------
@@ -252,8 +256,10 @@ class ModFile:
         user_json = self._client._post_request(f"/general/ownership", data={"resource_type" : "files", "resource_id" : self.id})
         return User(**user_json)
 
-    def edit(self, **fields):
-        """Edit the file's details
+    async def edit(self, **fields):
+        """Edit the file's details.
+
+        This function is a coroutine
 
         Parameters
         -----------
@@ -273,9 +279,11 @@ class ModFile:
         file_json = self._client._put_request(f'/games/{self._game_id}/mods/{self.mod_id}/files/{self.id}', data = fields)
         self.__init__(client=self._client, game_id=self._game_id, **file_json)
 
-    def delete(self):
+    async def delete(self):
         """Deletes the modfile, this will raise an error if the
-        file is the active release for the mod
+        file is the active release for the mod.
+
+        This function is a coroutine
 
         Raises
         -------
@@ -285,7 +293,7 @@ class ModFile:
         if not self._game_id:
             raise modioException("This endpoint cannot be used for ModFile object recuperated through the me/modfiles endpoint")
             
-        r = self.client._delete_request(f'/games/{self._game_id}/mods/{self.mod_id}/files/{self.id}')
+        r = await self._client._delete_request(f'/games/{self._game_id}/mods/{self.mod_id}/files/{self.id}')
         return r
 
     def url_expired(self):
@@ -530,8 +538,10 @@ class TeamMember(User):
     def __repr__(self):
         return f"<modio.TeamMember team_id={self.team_id} id={self.id} level={self.level}>"
 
-    def edit(self, *, level=None, position=None):
+    async def edit(self, *, level=None, position=None):
         """Edit a team member's details.
+
+        This function is a coroutine
 
         Parameters
         -----------
@@ -548,8 +558,10 @@ class TeamMember(User):
         msg = self._client._put_request(f'/games/{self._mod.game}/mods/{self._mod.id}/team/{self.team_id}', data=data)
         return Message(**msg)
 
-    def delete(self):
-        """Remove the user from the team. Fires a MOD_TEAM_CHANGED event"""
+    async def delete(self):
+        """Remove the user from the team. Fires a MOD_TEAM_CHANGED event.
+
+        This function is a coroutine"""
         r = self._client._delete_request(f'/games/{self._mod.game}/mods/{self._mod.id}/team/{self.team_id}')
         return r
     

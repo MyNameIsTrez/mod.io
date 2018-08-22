@@ -138,9 +138,11 @@ class Game:
         return tag_list
 
 
-    def get_mod(self, id : int):
+    async def get_mod(self, id : int):
         """Queries the mod.io API for the given mod ID and if found returns it as a 
-        modio.Mod instance. If not found raises NotFound
+        modio.Mod instance. If not found raises NotFound.
+
+        This function is a coroutine
 
         Parameters
         -----------
@@ -154,16 +156,18 @@ class Game:
 
         Returns
         --------
-        :class: `Mod`
+        modio.Mod
             The mod with the given ID
         
         """
-        mod_json = self._client._get_request(f"/games/{self.id}/mods/{id}")
+        mod_json = await self._client._get_request(f"/games/{self.id}/mods/{id}")
         return Mod(client=self._client, **mod_json)
 
-    def get_mods(self, filter=None):
+    async def get_mods(self, filter=None):
         """Gets all the mods available for the game. Takes filtering arguments. Returns a 
         named tuple with parameters results and pagination.
+
+        This function is a coroutine
 
         Parameters
         -----------
@@ -179,12 +183,14 @@ class Game:
             Pagination data
                
         """
-        mod_json = self._client._get_request(f"/games/{self.id}/mods", filter=filter)
+        mod_json = await self._client._get_request(f"/games/{self.id}/mods", filter=filter)
         return Returned([Mod(client=self._client, **mod) for mod in mod_json["data"]], Pagination(**mod_json))
 
-    def get_mod_events(self, *, filter=None):
+    async def get_mod_events(self, *, filter=None):
         """Gets all the mod events available for this game sorted by latest event first. Takes 
         filtering arguments.
+
+        This function is a coroutine
 
         Parameters
         -----------
@@ -200,13 +206,15 @@ class Game:
             Pagination data
                
         """
-        event_json = self._client._get_request(f"/games/{self.id}/mods/events", filter=filter)
+        event_json = await self._client._get_request(f"/games/{self.id}/mods/events", filter=filter)
 
         return Returned([Event(**event) for event in event_json["data"]], Pagination(**event_json))
 
-    def get_tags(self, *, filter=None):
+    async def get_tags(self, *, filter=None):
         """Gets all the game tags available for this game. Takes filtering
-        arguments. Updates the tag_option attribute
+        arguments. Updates the tag_option attribute.
+
+        This function is a coroutine
 
         Parameters
         -----------
@@ -222,13 +230,15 @@ class Game:
             Pagination data
                
         """
-        tag_json = self._client._get_request(f"/games/{self.id}/tags", filter=filter)
+        tag_json = await self._client._get_request(f"/games/{self.id}/tags", filter=filter)
         self.tag_options = tags = [TagOption(**tag_option) for tag_option in tag_json["data"]]
         return Returned(tags, Pagination(**tag_json))
 
-    def get_stats(self, *, filter=None):
+    async def get_stats(self, *, filter=None):
         """Gets the stat objects for all the mods of this game. Takes 
-        filtering arguments
+        filtering arguments.
+
+        This function is a coroutine
 
         Parameters
         -----------
@@ -243,23 +253,27 @@ class Game:
         modio.Pagination
             Pagination data
         """
-        stats_json = self._client._get_request(f"/games/{self.id}/mods/stats", filter=filter)
+        stats_json = await self._client._get_request(f"/games/{self.id}/mods/stats", filter=filter)
         return Returned([Stats(**stats) for stats in stats_json["data"]], Pagination(**stats_json))
 
-    def get_owner(self):
-        """Returns the original submitter of the resource
+    async def get_owner(self):
+        """Returns the original submitter of the resource.
+
+        This function is a coroutine
 
         Returns
         --------
         User
             User that submitted the resource
         """
-        user_json = self._client._post_request(f"/general/ownership", data={"resource_type" : "games", "resource_id" : self.id})
+        user_json = await self._client._post_request(f"/general/ownership", data={"resource_type" : "games", "resource_id" : self.id})
         return User(**user_json)
 
-    def edit(self, **fields):
+    async def edit(self, **fields):
         """Used to edit the game details. For editing the icon, logo or header use :func:`add_media`.
         Sucessful editing will update the game instance.
+
+        This function is a coroutine
 
         Parameters
         -----------
@@ -317,11 +331,13 @@ class Game:
             1 : Allow mod developpers to decide whether or not to flag their mod as 
             containing mature content"""
 
-        game_json = self._client._put_request(f'/games/{self.id}', data = fields)
+        game_json = await self._client._put_request(f'/games/{self.id}', data = fields)
         self.__init__(self._client, **game_json)
 
-    def add_mod(self, mod):
+    async def add_mod(self, mod):
         """Add a mod to this game.
+
+        This function is a coroutine
         
         Parameters
         -----------
@@ -350,15 +366,17 @@ class Game:
             mod_d[f"tags[{tags.index(tag)}]"] = tag
 
         try:
-            mod_json = self._client._post_request(f'/games/{self.id}/mods', h_type = 1, data = mod_d, files=files)
+            mod_json = await self._client._post_request(f'/games/{self.id}/mods', h_type = 1, data = mod_d, files=files)
         finally:
             mod.logo.close()
 
         return Mod(client=self._client, **mod_json)
 
-    def add_media(self, **media):
+    async def add_media(self, **media):
         """Upload new media to to the game. This function can take between 1 to 3 arguments
-        depending on what media you desire to upload/update
+        depending on what media you desire to upload/update.
+
+        This function is a coroutine
         
         Parameters
         -----------
@@ -386,16 +404,18 @@ class Game:
             media[image] = open(media[image], "rb")
 
         try:
-            message = self._client._post_request(f'/games/{self.id}/media', h_type = 1, files = media)
+            message = await self._client._post_request(f'/games/{self.id}/media', h_type = 1, files = media)
         finally:
             for image in media.values():
                 image.close()
         
         return Message(**message)
 
-    def add_tags(self, **tag_option):
+    async def add_tags(self, **tag_option):
         """Add tags which mods can apply to their profiles. If the tag name already exists it will
         overwrite it.
+
+        This function is a coroutine
 
         Parameters
         -----------
@@ -418,13 +438,15 @@ class Game:
         tags["hidden"] = json.dumps(tag_option.get("hidden", False))
         print(tags)
 
-        message = self._client._post_request(f'/games/{self.id}/tags', data=tags)
+        message = await self._client._post_request(f'/games/{self.id}/tags', data=tags)
 
         self.tag_options.append(TagOption(**tag_option))
         return Message(**message)
 
-    def delete_tags(self, **tags):
-        """Delete one or more tags from a tag option
+    async def delete_tags(self, **tags):
+        """Delete one or more tags from a tag option.
+
+        This function is a coroutine
         
         Parameters
         -----------
@@ -444,7 +466,7 @@ class Game:
         data = {f"tags[{raw_tags.index(tag)}]" : tag for tag in raw_tags} if len(raw_tags) > 0 else {"tags[]":""}
         data["name"] = tags.get("name")
 
-        r = self._client._delete_request(f'/games/{self.id}/tags', data = data)
+        r = await self._client._delete_request(f'/games/{self.id}/tags', data = data)
 
         option = find(self.tag_options, name=data["name"])
         if len(raw_tags) > 0:

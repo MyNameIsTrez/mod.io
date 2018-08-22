@@ -128,8 +128,10 @@ class Mod:
     def __repr__(self):
         return f"<modio.Mod id={self.id} name={self.name} game={self.game}>"   
 
-    def get_file(self, id : int):
-        """Get the Mod File with the following ID
+    async def get_file(self, id : int):
+        """Get the Mod File with the following ID.
+
+        This function is a coroutine
         
         Parameters
         -----------
@@ -146,12 +148,14 @@ class Mod:
         ModFile
             The found modfile
         """
-        file_json = self._client._get_request(f"/games/{self.game}/mods/{self.id}/files/{id}")
+        file_json = await self._client._get_request(f"/games/{self.game}/mods/{self.id}/files/{id}")
         return ModFile(**file_json, game_id=self.game, client=self._client)
 
-    def get_files(self, *, filter=None):
+    async def get_files(self, *, filter=None):
         """Get all mod files for this mod. Takes filtering arguments. Returns a named tuple
         with parameters results and pagination.
+
+        This function is a coroutine
 
         Parameters
         -----------
@@ -166,12 +170,14 @@ class Mod:
         modio.Pagination
             Pagination data
         """
-        files_json = self._client._get_request(f"/games/{self.game}/mods/{self.id}/files", filter=filter)
+        files_json = await self._client._get_request(f"/games/{self.game}/mods/{self.id}/files", filter=filter)
         return Returned([ModFile(**file, game_id=self.game, client=self._client) for file in files_json["data"]], Pagination(**files_json))
 
-    def get_events(self, *, filter=None):
+    async def get_events(self, *, filter=None):
         """Get all events for that mod sorted by latest. Takes filtering arguments. Returns ,
         a named tuple with parameters results and pagination.
+
+        This function is a coroutine
 
         Parameters
         -----------
@@ -187,12 +193,14 @@ class Mod:
             Pagination data
 
         """
-        event_json = self._client._get_request(f"/games/{self.game}/mods/{self.id}/events", filter=filter)
+        event_json = await self._client._get_request(f"/games/{self.game}/mods/{self.id}/events", filter=filter)
         return Returned([Event(**event) for event in event_json["data"]], Pagination(**event_json))
 
-    def get_tags(self, *, filter=None): 
+    async def get_tags(self, *, filter=None): 
         """Gets all the tags for this mod. Takes filtering arguments. Updates the instance's
         tag attribute. Returns a named tuple with parameters results and pagination.
+
+        This function is a coroutine
 
         Parameters
         -----------
@@ -208,12 +216,14 @@ class Mod:
             Pagination data
 
         """
-        tag_json = self._client._get_request(f"/games/{self.game}/mods/{self.id}/tags", filter=filter)
+        tag_json = await self._client._get_request(f"/games/{self.game}/mods/{self.id}/tags", filter=filter)
         self.tags = new_tags = {tag["name"] : tag["date_added"] for tag in tag_json["data"]}
         return Returned(new_tags, Pagination(**tag_json))
 
-    def get_metadata(self):
+    async def get_metadata(self):
         """Returns a dict of metakey-metavalue pairs. This will also update the mod's kvp attribute.
+
+        This function is a coroutine
 
         Returns
         --------
@@ -222,13 +232,15 @@ class Mod:
         modio.Pagination
             Pagination data
         """
-        meta_json = self._client._get_request(f"/games/{self.game}/mods/{self.id}/metadatakvp")
+        meta_json = await self._client._get_request(f"/games/{self.game}/mods/{self.id}/metadatakvp")
         self._kvp_raw = meta_json["data"]
         return Returned(self.kvp, Pagination(**meta_json))
 
-    def get_dependencies(self, *, filter=None):
+    async def get_dependencies(self, *, filter=None):
         """Returns a dict of dependency_id-date_added pairs. Takes filtering arguments. Returns 
         a named tuple with parameters results and pagination.
+
+        This function is a coroutine
 
         Parameters
         -----------
@@ -244,12 +256,14 @@ class Mod:
             Pagination data
 
         """
-        depen_json = self._client._get_request(f"/games/{self.game}/mods/{self.id}/dependencies", filter=filter)
+        depen_json = await self._client._get_request(f"/games/{self.game}/mods/{self.id}/dependencies", filter=filter)
         return Returned({dependecy["mod_id"] : dependecy["date_added"] for dependecy in depen_json["data"]}, Pagination(**depen_json))
 
-    def get_team(self, *, filter=filter):
+    async def get_team(self, *, filter=filter):
         """Returns a list of TeamMember object representing the Team in charge of the mod. Takes
-        filtering arguments
+        filtering arguments.
+
+        This function is a coroutine
 
         Parameters
         -----------
@@ -265,11 +279,13 @@ class Mod:
             Pagination data
 
         """
-        team_json = self._client._get_request(f"/games/{self.game}/mods/{self.id}/team", filter=filter)
+        team_json = await self._client._get_request(f"/games/{self.game}/mods/{self.id}/team", filter=filter)
         return Returned([TeamMember(**member, client=self._client, mod=self) for member in team_json["data"]], Pagination(**team_json))
 
-    def get_comments(self, *, filter=None):
-        """Returns a list of all the comments for this mod. Takes filtering arguments
+    async def get_comments(self, *, filter=None):
+        """Returns a list of all the comments for this mod. Takes filtering arguments.
+
+        This function is a coroutine
 
         Parameters
         -----------
@@ -284,34 +300,40 @@ class Mod:
         modio.Pagination
             Pagination data
         """
-        comment_json = self._client._get_request(f"/games/{self.game}/mods/{self.id}/comments", filter=filter)
+        comment_json = await self._client._get_request(f"/games/{self.game}/mods/{self.id}/comments", filter=filter)
         return Returned([Comment(**comment, client=self._client, mod=self) for comment in comment_json["data"]], Pagination(**comment_json))
 
-    def get_stats(self):
-        """Returns a Stats object, representing a series of stats for the mod
+    async def get_stats(self):
+        """Returns a Stats object, representing a series of stats for the mod.
+
+        This function is a coroutine
 
         Returns
         -------
         Stats
             The stats summary object for the mod.
         """
-        stats_json = self._client._get_request(f"/games/{self.game}/mods/{self.id}/stats")
+        stats_json = await self._client._get_request(f"/games/{self.game}/mods/{self.id}/stats")
         self.stats = stats = Stats(**stats_json)
         return stats
 
-    def get_owner(self):
-        """Returns the original submitter of the resource
+    async def get_owner(self):
+        """Returns the original submitter of the resource.
+
+        This function is a coroutine
 
         Returns
         --------
         User
             User that submitted the resource
         """
-        user_json = self._client._post_request(f"/general/ownership", data={"resource_type" : "mods", "resource_id" : self.id})
+        user_json = await self._client._post_request(f"/general/ownership", data={"resource_type" : "mods", "resource_id" : self.id})
         return User(**user_json)
 
-    def edit(self, **fields):
-        """Used to edit the mod details. Sucessful editing will update the mod instance.
+    async def edit(self, **fields):
+        """Used to edit the mod details. Sucessful editing will update the mod instance. 
+
+        This function is a coroutine
 
         Parameters
         -----------
@@ -350,18 +372,22 @@ class Mod:
                 Metadata stored by the mod developer which may include properties as to how 
                 the item works, or other information you need to display.
         """
-        mod_json = self._client._put_request(f'/games/{self.game}/mods/{self.id}', data = fields)
+        mod_json = await self._client._put_request(f'/games/{self.game}/mods/{self.id}', data = fields)
         return self.__init__(self._client, **mod_json)
 
-    def delete(self):
-        """Delete a mod and set its status to deleted."""
-        r = self._client._delete_request(f'/games/{self.game}/mods/{self.id}')
+    async def delete(self):
+        """Delete a mod and set its status to deleted.
+
+        This function is a coroutine"""
+        r = await self._client._delete_request(f'/games/{self.game}/mods/{self.id}')
         self.status = 3
         return r
 
-    def add_file(self, file : NewModFile):
+    async def add_file(self, file : NewModFile):
         """Adds a new file to the mod, to do so first construct an instance of NewModFile
         and then pass it to the function.
+
+        This function is a coroutine
         
         Parameters
         -----------
@@ -385,14 +411,16 @@ class Mod:
         file_d = file.__dict__.copy()
         files = {"filedata" : file_d.pop("file")}
         try:
-            file_json = self._client._post_request(f'/games/{self.game}/mods/{self.id}/files', h_type = 1, data = file_d, files=files)
+            file_json = await self._client._post_request(f'/games/{self.game}/mods/{self.id}/files', h_type = 1, data = file_d, files=files)
         finally:
             file.file.close()
 
         return ModFile(**file_json, game_id=self.game, client=self._client)
 
-    def add_media(self, **media):
+    async def add_media(self, **media):
         """Upload new media to the mod.
+
+        This function is a coroutine
 
         Parameters
         -----------
@@ -436,7 +464,7 @@ class Mod:
         media = {**media, **yt, **sketch, **images}
 
         try:
-            media_json = self._client._post_request(f'/games/{self.game}/mods/{self.id}/media', h_type = 1, files = media)
+            media_json = await self._client._post_request(f'/games/{self.game}/mods/{self.id}/media', h_type = 1, files = media)
         finally:
             media["logo"].close()
             for image in images.values():
@@ -445,8 +473,10 @@ class Mod:
 
         return Message(**media_json)
 
-    def delete_media(self, **media):
+    async def delete_media(self, **media):
         """Delete media from the mod page. 
+
+        This function is a coroutine
 
         Parameters
         -----------
@@ -466,11 +496,13 @@ class Mod:
         sketch = media.pop("sketchfab", [])
         sketch = {f"sketchfab[{sketch.index(link)}]" : link for link in sketch}
 
-        r = self._client._delete_request(f'/games/{self.game}/mods/{self.id}/media')
+        r = await self._client._delete_request(f'/games/{self.game}/mods/{self.id}/media')
         return r
 
-    def subscribe(self):
+    async def subscribe(self):
         """Subscribe to the mod. Returns None if user is already subsribed. 
+
+        This function is a coroutine
 
         Returns
         --------
@@ -478,23 +510,27 @@ class Mod:
             The mod that was just subscribed to, if the user was already subscribed it will return None
         """
         try:
-            mod_json = self._client._post_request(f'/games/{self.game}/mods/{self.id}/subscribe')
+            mod_json = await self._client._post_request(f'/games/{self.game}/mods/{self.id}/subscribe')
             return Mod(self._client, **mod_json)
         except BadRequest:
             pass
 
-    def unsubscribe(self):
-        """Unsubscribe from a mod. Returns None if the user is not subscribed."""
+    async def unsubscribe(self):
+        """Unsubscribe from a mod. Returns None if the user is not subscribed.
+
+        This function is a coroutine"""
 
         try:
-            r = self._client._delete_request(f'/games/{self.game}/mods/{self.id}/subscribe')
+            r = await self._client._delete_request(f'/games/{self.game}/mods/{self.id}/subscribe')
             return r
         except BadRequest:
             pass
 
-    def add_tags(self, tags : list):
+    async def add_tags(self, tags : list):
         """Add tags to a mod, tags are case insensitive and duplicates will be removed. Tags
         which are not in the game's tag_options will not be added.
+
+        This function is a coroutine
 
         Parameters
         -----------
@@ -502,7 +538,7 @@ class Mod:
             list of tags to be added. 
 
         """
-        self.get_tags()
+        await self.get_tags()
         tags = list(set([tag.lower() for tag in tags if tag.lower() not in self.tags.keys()]))
         
         if len(tags) < 1:
@@ -510,23 +546,25 @@ class Mod:
 
         fields = {f"tags[{tags.index(tag)}]" : tag for tag in tags}
 
-        message = self._client._post_request(f'/games/{self.game}/mods/{self.id}/tags', data = fields)
+        message = await self._client._post_request(f'/games/{self.game}/mods/{self.id}/tags', data = fields)
         
         for tag in tags:
             self.tags[tag] = int(time.time())
 
         return Message(**message)
 
-    def delete_tags(self, tags : list = None):
+    async def delete_tags(self, tags : list = None):
         """Delete tags from the mod, tags are case insensitive and duplicates will be removed. Providing
         no arguments will remove every tag from the mod.
+
+        This function is a coroutine
 
         Parameters
         tags : list
             List of tags to remove, if no list is provided, will remove every tag from the mod.
 
         """
-        self.get_tags()
+        await self.get_tags()
         if tags:
             tags = list(set([tag.lower() for tag in tags if tag.lower() in self.tags.keys()]))
         else:
@@ -537,40 +575,46 @@ class Mod:
 
         fields = {f"tags[{tags.index(tag)}]" : tag for tag in tags} if len(tags) > 0 else {"tags[]":""}
 
-        r = self._client._delete_request(f'/games/{self.game}/mods/{self.id}/tags', data = fields)
+        r = await self._client._delete_request(f'/games/{self.game}/mods/{self.id}/tags', data = fields)
 
         for tag in tags:
             del self.tags[tag]
             
         return r
 
-    def _add_rating(self, rating : RatingType):
+    async def _add_rating(self, rating : RatingType):
         try:
-            checked = self._client._post_request(f'/games/{self.game}/mods/{self.id}/ratings', data={"rating":rating.value})
+            checked = await self._client._post_request(f'/games/{self.game}/mods/{self.id}/ratings', data={"rating":rating.value})
         except BadRequest:
             return False
 
-        self.get_stats()
+        await self.get_stats()
         return True
 
-    def add_positive_rating(self):
+    async def add_positive_rating(self):
         """Adds a good rating to the mod, the author of the rating will be the authenticated user.
         If the mod has already been rated by the user it will return False. If the positive rating
-        is successful it will return True"""
-        return self._add_rating(RatingType.good)
+        is successful it will return True.
 
-    def add_negative_rating(self):
+        This function is a coroutine"""
+        return await self._add_rating(RatingType.good)
+
+    async def add_negative_rating(self):
         """Adds a bad rating to the mod, the author of the rating will be the authenticated user.
         If the mod has already been rated by the user it will return False. If the negative rating
-        is successful it will return True."""
-        return self._add_rating(RatingType.bad)
+        is successful it will return True.
 
-    def add_metadata(self, **metadata):
+        This function is a coroutine"""
+        return await self._add_rating(RatingType.bad)
+
+    async def add_metadata(self, **metadata):
         """Add metadate key-value pairs to the mod. To submit new meta data, pass meta data keys
         as keyword arguments and meta data value as a list of values. E.g pistol_dmg = [800, 400].
         Keys support alphanumeric, '-' and '_'. Total lengh of key and values cannot exceed 255
         characters. To add meta-keys which contain a dash in their name they must be passed as an
         upacked dictionnary.
+
+        This function is a coroutine
 
         Example
         --------
@@ -591,7 +635,7 @@ class Mod:
             metadata_d[f"metadata[{index}]"] = f"{data}:{':'.join(metadata[data])}"
             index += 1
 
-        checked = self._client._post_request(f'/games/{self.game}/mods/{self.id}/metadatakvp', data=metadata_d)
+        checked = await self._client._post_request(f'/games/{self.game}/mods/{self.id}/metadatakvp', data=metadata_d)
         
         for key, value in metadata.items():
             for item in value:
@@ -599,11 +643,13 @@ class Mod:
 
         return Message(**checked)
 
-    def delete_metadata(self, **metadata):
+    async def delete_metadata(self, **metadata):
         """Deletes metadata from a mod. To do so pass the meta-key as a keyword argument and the
         meta-values you wish to delete as a list. You can pass an empty list in which case all
         meta-values for the meta-key will be deleted. To delete meta-keys which contain a dash in their 
         name they must be passed as an upacked dictionnary.
+
+        This function is a coroutine
 
         Example
         --------
@@ -623,7 +669,7 @@ class Mod:
             metadata_d[f"metadata[{index}]"] = f"{data}{':' if len(metadata[data]) > 0 else ''}{':'.join(metadata[data])}"
             index += 1
 
-        r = self._client._delete_request(f'/games/{self.game}/mods/{self.id}/metadatakvp', data=metadata_d)
+        r = await self._client._delete_request(f'/games/{self.game}/mods/{self.id}/metadatakvp', data=metadata_d)
 
         for key, values in metadata.items():
             if len(values) == 0:
@@ -633,11 +679,13 @@ class Mod:
 
         return r
 
-    def add_dependencies(self, dependencies : list):
+    async def add_dependencies(self, dependencies : list):
         """Add mod dependencies required by the corresponding mod. A dependency is a mod 
         that should be installed for this mod to run. Since the API officially only supports
         adding 5 dependencies at a time, passing more than 5 to this function will cause
         additional requests for every 5 additional dependency.
+
+        This function is a coroutine
 
         Parameters
         ----------
@@ -649,12 +697,14 @@ class Mod:
             dependency = {f"dependencies[{dependencies.index(data)}]" : data for data in dependencies[:5]}
             dependencies = dependencies[5:]
 
-            r = self._client._post_request(f'/games/{self.game}/mods/{self.id}/dependencies', data=dependency)
+            r = await self._client._post_request(f'/games/{self.game}/mods/{self.id}/dependencies', data=dependency)
 
         return Message(**r)
 
-    def delete_dependencies(self, dependencies : list):
+    async def delete_dependencies(self, dependencies : list):
         """Delete mod dependecies required by this mod.
+
+        This function is a coroutine
 
         Parameters
         -----------
@@ -662,11 +712,13 @@ class Mod:
             List of dependencies to remove
         """
         dependecy = {f"dependencies[{dependencies.index(data)}]" : data for data in dependencies}
-        r = self._client._delete_request(f'/games/{self.game}/mods/{self.id}/dependencies', data=dependecy)
+        r = await self._client._delete_request(f'/games/{self.game}/mods/{self.id}/dependencies', data=dependecy)
         return r
 
-    def add_team_member(self, *, email, level, position=None):
+    async def add_team_member(self, *, email, level, position=None):
         """Add a user to the mod team. Will fire a MOD_TEAM_CHANGED event.
+
+        This function is a coroutine
 
         Parameters
         -----------
@@ -682,6 +734,6 @@ class Mod:
 
         """
         data = {"email" : email, "level" : level, "position" : position}
-        msg = self._client._post_request(f'/games/{self.game}/mods/{self.id}/team', data=data)
+        msg = await self._client._post_request(f'/games/{self.game}/mods/{self.id}/team', data=data)
         return Message(**msg)
 

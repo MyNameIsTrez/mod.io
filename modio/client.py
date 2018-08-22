@@ -65,6 +65,13 @@ class Client:
 
     def __repr__(self):
         return f"<modio.Client rate_limit={self.rate_limit} rate_retry={self.rate_retry} rate_remain={self.rate_remain}>"
+
+    async def close(self):
+        """This function is used to clean up the client in order to close the application that it uses gracefully.
+        At the moment it is only used to close the client's Session.
+
+        This function is a coroutine"""
+        await self.session.close()
     
     async def _error_check(self, r):
         """Updates the rate-limit attributes and check validity of the request."""
@@ -75,7 +82,7 @@ class Client:
         if r.status_code == 204:
             return r
 
-        request_json = r.json()
+        request_json = await r.json()
         if "error" in request_json:
             code = request_json["error"]["code"]
             msg = request_json["error"]["message"]
@@ -135,7 +142,7 @@ class Client:
 
         return headers
 
-    def _get_request(self, url, *, h_type=0, **fields):
+    async def _get_request(self, url, *, h_type=0, **fields):
         filter = (fields.pop("filter") if fields.get("filter") else Filter()).__dict__.copy()
         extra = {**filter, **fields}
 
@@ -143,24 +150,26 @@ class Client:
             extra["api_key"] = self.api_key
             h_type = 2
 
-        r  = requests.get(self.BASE_PATH + url, headers=self._define_headers(h_type), params=extra)
-        return self._error_check(r)
+        async with self.session.get(self.BASE_PATH + url, headers=await self._define_headers(h_type), params=extra) as r:
+            return await self._error_check(r)
 
-    def _post_request(self, url, *, h_type=0, **fields):
-        r = requests.post(self.BASE_PATH + url, headers=self._define_headers(h_type), **fields)
-        return self._error_check(r)
+    async def _post_request(self, url, *, h_type=0, **fields):
+        async with self.session.post(self.BASE_PATH + url, headers=await self._define_headers(h_type), **fields) as r:
+            return await self._error_check(r)
 
-    def _put_request(self, url, *, h_type=0, **fields):
-        r = requests.put(self.BASE_PATH + url, headers=self._define_headers(h_type), **fields)
-        return self._error_check(r)
+    async def _put_request(self, url, *, h_type=0, **fields):
+        async with self.session.put(self.BASE_PATH + url, headers=await self._define_headers(h_type), **fields) as r:
+            return await self._error_check(r)
 
-    def _delete_request(self, url, *, h_type=0, **fields):
-        r = requests.delete(self.BASE_PATH + url, headers=self._define_headers(h_type), **fields)
-        return self._error_check(r)
+    async def _delete_request(self, url, *, h_type=0, **fields):
+        async with self.session.delete(self.BASE_PATH + url, headers=await self._define_headers(h_type), **fields) as r:
+            return await self._error_check(r)
 
-    def get_game(self, id : int):
+    async def get_game(self, id : int):
         """Queries the mod.io API for the given game ID and if found returns it as a 
-        modio.Game instance. If not found raises NotFound
+        modio.Game instance. If not found raises NotFound.
+
+        This function is a coroutine
 
         Parameters
         -----------
@@ -178,12 +187,14 @@ class Client:
             The game with the given ID
         
         """
-        game_json = self._get_request(f'/games/{id}')
+        game_json = await self._get_request(f'/games/{id}')
         return Game(client=self, **game_json)
 
-    def get_games(self, *, filter=None):
+    async def get_games(self, *, filter=None):
         """Gets all the games available on mod.io. Takes filtering arguments. Returns a 
         named tuple with parameters results and pagination.
+
+        This function is a coroutine
 
         Parameters
         -----------
@@ -198,10 +209,10 @@ class Client:
         modio.Pagination
             Pagination data       
         """
-        game_json = self._get_request('/games', filter=filter)
+        game_json = await self._get_request('/games', filter=filter)
         return Returned([Game(client=self, **game) for game in game_json["data"]], Pagination(**game_json))
 
-    def get_user(self, id : int):
+    async def get_user(self, id : int):
         """Gets a user with the specified ID.
 
         Parameters
@@ -220,12 +231,14 @@ class Client:
             The user with the given ID
 
         """
-        user_json = self._get_request(f"/users/{id}")
+        user_json = await self._get_request(f"/users/{id}")
         return User(**user_json)
 
-    def get_users(self, *, filter=None):
+    async def get_users(self, *, filter=None):
         """Gets all the users availaible on mod.io. Takes filtering arguments. Returns 
         a named tuple with parameters results and pagination.
+
+        This function is a coroutine
 
         Parameters
         -----------
@@ -241,11 +254,14 @@ class Client:
             Pagination data
                
         """
-        user_json = self._get_request("/users", filter=filter)
+        user_json = await self._get_request("/users", filter=filter)
         return Returned([User(**user) for user in user_json["data"]], Pagination(**user_json))
     
-    def get_my_user(self):
+    async def get_my_user(self):
         """Gets the authenticated user's details (aka the user who created the API key/access token)
+
+        This function is a coroutine
+
         Raises
         -------
         Forbidden
@@ -257,12 +273,14 @@ class Client:
             The authenticated user
         
         """
-        me_json = self._get_request("/me")
+        me_json = await self._get_request("/me")
         return User(**me_json)
 
-    def get_my_subs(self, *, filter=None):
+    async def get_my_subs(self, *, filter=None):
         """Gets all the mods the authenticated user is subscribed to.  Takes
         filtering arguments.
+
+        This function is a coroutine
 
         Parameters
         -----------
@@ -282,12 +300,14 @@ class Client:
         modio.Pagination
             Pagination data
         """
-        mod_json = self._get_request("/me/subscribed", filter=filter)
+        mod_json = await self._get_request("/me/subscribed", filter=filter)
         return Returned([Mod(client=self, **mod) for mod in mod_json["data"]], Pagination(**mod_json))
 
-    def get_my_events(self, *, filter=None):
+    async def get_my_events(self, *, filter=None):
         """Get events that have been fired specifically for the authenticated user. Takes
-        filtering argmuments
+        filtering argmuments.
+
+        This function is a coroutine
 
         Parameters
         -----------
@@ -302,12 +322,14 @@ class Client:
         modio.Pagination
             Pagination data
         """
-        events_json = self._get_request("/me/events", filter=filter)
+        events_json = await self._get_request("/me/events", filter=filter)
         return Returned([Event(**event) for event in events_json["data"]], Pagination(**events_json))
 
-    def get_my_games(self, filter=None):
+    async def get_my_games(self, filter=None):
         """Get all the games the authenticated user added or is a team member of. Takes
         filtering arguments.
+
+        This function is a coroutine
 
         Parameters
         -----------
@@ -327,12 +349,14 @@ class Client:
         modio.Pagination
             Pagination data
         """
-        game_json = self._get_request("/me/games", filter=filter)
+        game_json = await self._get_request("/me/games", filter=filter)
         return Returned([Game(client=self, **game) for game in game_json["data"]], Pagination(**game_json))
 
-    def get_my_mods(self, *, filter=None):
+    async def get_my_mods(self, *, filter=None):
         """Get all the mods the authenticated user added or is a team member of. Takes
         filtering arguments.
+
+        This function is a coroutine
 
         Parameters
         -----------
@@ -352,13 +376,15 @@ class Client:
         modio.Pagination
             Pagination data
         """
-        mod_json = self._get_request("/me/mods", filter=filter)
+        mod_json = await self._get_request("/me/mods", filter=filter)
         return Returned([Mod(client=self, **mod) for mod in mod_json["data"]], Pagination(**mod_json))
 
-    def get_my_modfiles(self, *, filter=None):
+    async def get_my_modfiles(self, *, filter=None):
         """Get all the mods the authenticated user uploaded. The returned modfile objects cannot be
         edited or deleted and do not have a `game_id` attribute. Takes filtering arguments. Returns 
         a named tuple with parameters results and pagination.
+
+        This function is a coroutine
 
         Parameters
         -----------
@@ -378,12 +404,14 @@ class Client:
         modio.Pagination
             Pagination data
         """
-        files_json = self._get_request("/me/files", filter=filter)
+        files_json = await self._get_request("/me/files", filter=filter)
         return Returned([ModFile(**file, client=self) for file in files_json["data"]], Pagination(**files_json))
         
-    def email_request(self, email : str):
+    async def email_request(self, email : str):
         """Posts an email request for an OAuth2 token. A code will be sent to the given email address
         which can then be entered into :func:`email_exchange`.
+
+        This function is a coroutine
         
         Parameters
         ----------
@@ -392,11 +420,13 @@ class Client:
 
         """
 
-        r = self._post_request("/oauth/emailrequest", params={'email' : email, 'api_key': self.api_key}, h_type = 2)
+        r = await self._post_request("/oauth/emailrequest", params={'email' : email, 'api_key': self.api_key}, h_type = 2)
         return Message(**r)
 
-    def email_exchange(self, code : int):
+    async def email_exchange(self, code : int):
         """Exchanges the given 5-digit code for an OAuth2 token.
+
+        This function is a coroutine
 
         Parameters
         ----------
@@ -420,14 +450,16 @@ class Client:
         if len(code) != 5:
             raise ValueError("Security code must be 5 digits")
 
-        r = self._post_request("/oauth/emailexchange", params={'security_code' : code, "api_key":self.api_key}, h_type=2)
+        r = await self._post_request("/oauth/emailexchange", params={'security_code' : code, "api_key":self.api_key}, h_type=2)
         self.access_token = r["access_token"]
 
         return r["access_token"]
 
-    def report(self, *, resource : Union[Game, User, Mod, Object], type : int = 0, name : str, summary : str):
+    async def report(self, *, resource : Union[Game, User, Mod, Object], type : int = 0, name : str, summary : str):
         """Used to report for any resource on mod.io. Make sure to read mod.io's ToU to understand
-        what is and isn't acceptable
+        what is and isn't acceptable.
+
+        This function is a coroutine
 
         Parameters
         -----------
@@ -469,7 +501,7 @@ class Client:
         if fields["resource"] not in ["games", "mods", "users"]:
             raise modioException("You cannot report this type of resources")
 
-        msg = self._post_request('/report', data = fields)
+        msg = await self._post_request('/report', data = fields)
 
         return Message(**msg)
         
