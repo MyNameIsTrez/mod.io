@@ -150,19 +150,19 @@ class Client:
             extra["api_key"] = self.api_key
             h_type = 2
 
-        async with self.session.get(self.BASE_PATH + url, headers=await self._define_headers(h_type), params=extra) as r:
+        async with self.session.get(self.BASE_PATH + url, headers=self._define_headers(h_type), params=extra) as r:
             return await self._error_check(r)
 
     async def _post_request(self, url, *, h_type=0, **fields):
-        async with self.session.post(self.BASE_PATH + url, headers=await self._define_headers(h_type), **fields) as r:
+        async with self.session.post(self.BASE_PATH + url, headers=self._define_headers(h_type), **fields) as r:
             return await self._error_check(r)
 
     async def _put_request(self, url, *, h_type=0, **fields):
-        async with self.session.put(self.BASE_PATH + url, headers=await self._define_headers(h_type), **fields) as r:
+        async with self.session.put(self.BASE_PATH + url, headers=self._define_headers(h_type), **fields) as r:
             return await self._error_check(r)
 
     async def _delete_request(self, url, *, h_type=0, **fields):
-        async with self.session.delete(self.BASE_PATH + url, headers=await self._define_headers(h_type), **fields) as r:
+        async with self.session.delete(self.BASE_PATH + url, headers=self._define_headers(h_type), **fields) as r:
             return await self._error_check(r)
 
     async def get_game(self, id : int):
