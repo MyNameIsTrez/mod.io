@@ -407,6 +407,35 @@ class Client:
         """
         files_json = await self._get_request("/me/files", filter=filter)
         return Returned([ModFile(**file, client=self) for file in files_json["data"]], Pagination(**files_json))
+
+    async def get_my_ratings(self, *, filter=None):
+        """Get all the ratings the authentitated user has submitted. Takes filtering arguments. Returns a named
+        with parameter results and pagination.
+
+        This function is a coroutine
+
+        Paramaters
+        -----------
+        filter : Optional[modio.Filter]
+            A instance of modio.Filter to be used for filtering, paginating and sorting 
+            results
+
+        Raises
+        -------
+        Forbidden
+            The access token is invalid/missing
+
+        Returns
+        -------
+        list[modio.Rating]
+            A list of modio.Rating instances representing all ratings the user added.
+        modio.Pagination
+            Pagination data
+        """
+
+        ratings = await self._get_request("/me/ratings", filter=filter)
+        return Returned([Rating(**rating, client=self) for rating in ratings["data"]], Pagination(**ratings))
+        
         
     async def email_request(self, email : str):
         """Posts an email request for an OAuth2 token. A code will be sent to the given email address

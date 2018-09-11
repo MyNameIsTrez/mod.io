@@ -353,8 +353,61 @@ class TagOption:
         return f"<modio.TagOption name={self.name} hidden={self.hidden}>"
 
 class RatingType(enum.Enum):
-    good = 1
-    bad = -1
+    good    = 1
+    neutral = 0
+    bad     = -1
+
+class Rating:
+    """Represents a rating, objects obtained from the get_my_ratings endpoint
+
+    Attributes
+    -----------
+    game : int
+        The ID of the game the rated mod is for.
+    mod : int
+        The ID of the mod that was rated
+    rating : RatingType
+        The rating type
+    date : int
+        UNIX timestamp of whe the rating was added
+
+    """
+    def __init__(self, **attrs):
+        self.game = attrs.pop("game_id")
+        self.mod = attrs.pop("mod_id")
+        self.rating = RatingType(attrs.pop("rating"))
+        self.date = attrs.pop("date_added")
+        self._client = attrs.pop("client")
+
+    async def delete(self):
+        """Sets the rating to neutral."""
+        raise NotImplementedError("WIP")
+
+    async def _add_rating(self, rating : RatingType):
+        try:
+            checked = await self._client._post_request(f'/games/{self.game}/mods/{self.mod}/ratings', data={"rating":rating.value})
+        except BadRequest:
+            return False
+
+        await self.get_stats()
+        return True
+
+    async def add_positive_rating(self):
+        """Changes the mod rating to positive, the author of the rating will be the authenticated user.
+        If the mod has already been positevely rated by the user it will return False. If the positive rating
+        is successful it will return True
+
+        This function is a coroutine"""
+        return await self._add_rating(RatingType.good)
+
+    async def add_negative_rating(self):
+        """Changes the mod rating to negative, the author of the rating will be the authenticated user.
+        If the mod has already been negatively rated by the user it will return False. If the negative rating
+        is successful it will return True.
+
+        This function is a coroutine"""
+        return await self._add_rating(RatingType.bad)
+
 
 class Stats:
     """Represents a summary of stats for a mod
@@ -926,14 +979,17 @@ class Pagination:
         Number of results returned by the request.
     limit : int
         Maximum number of results returned.
-    offsent : int
+    offset : int
         Number of results skipped over
+    total : int
+        Total number of results avalaible for that endpoint
     """
 
     def __init__(self, **attrs):
         self.count = attrs.pop("result_count")
         self.limit = attrs.pop("result_limit")
         self.offset = attrs.pop("result_offset")
+        self.total = attrs.pop("result_total")
 
     def __repr__(self):
         return f"<modio.Pagination count={self.count} limit={self.limit} offset={self.offset}>"
@@ -941,7 +997,7 @@ class Pagination:
     def max(self):
         """Returns True if there are no additional results after this set. Can fail if the returned count is coincidentally
         exactly the same as the limit."""
-        return self.count == self.limit
+        return (self.offset + self.count) == self.total
 
     def min(self):
         """Returns True if there are no additional results before this set."""
@@ -958,7 +1014,6 @@ class Pagination:
     def page(self):
         """Returns the current page number. Page numbers start at 0"""
         return self.offset // self.limit
-
 
 
 class Object:
