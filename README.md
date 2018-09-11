@@ -74,4 +74,4 @@ if __name__ == '__main__':
 ```
 
 ## How to install
-`pip install git+git://github.com/ClementJ18/mod.io.git@async`
+`pip install git+git://github.com/ClementJ18/mod.io.git@db8418831fb961fe7f55483b3bdcd280e961b1a6`
