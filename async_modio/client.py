@@ -31,6 +31,10 @@ class Client:
     version : Optional[str]
         An optional keyword argument to allow you to pick a specific version of the API to query,
         usually you shouldn't need to change this. Default is the latest supported version.
+    loop : Optional[asyncio.EventLoop]
+        An optional keyword argument allowing you to pass a loop, if no loop is passed the Client
+        will get the current event loop. 
+
 
     Attributes
     -----------
