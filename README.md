@@ -3,7 +3,7 @@
 ![mod.io Logo](https://static.mod.io/v1/images/branding/modio-color-dark.png "https://mod.io")
 
 An async wrapper for the mod.io API in Python. 
-* [Docs](https://clementj18.github.io/mod.io/)
+* [Docs](https://modio.readthedocs.io)
 * [Support](https://discord.gg/Hkq7X7n)
 
 Looking for the sync wrapper? [Click here](https://github.com/ClementJ18/mod.io)
